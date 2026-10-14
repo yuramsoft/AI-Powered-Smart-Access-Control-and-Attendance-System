@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-smart_access}
+      POSTGRES_USER: ${POSTGRES_USER:-smart_access_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-local-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-smart_access_user} -d ${POSTGRES_DB:-smart_access}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  web:
+    build: .
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      AI_SERVICE_URL: http://ai:8001
+    ports: ["8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+      ai: {condition: service_started}
+    volumes: [".:/app"]
+  ai:
+    build: ./ai_service
+    ports: ["8001:8001"]
+volumes:
+  postgres_data:
