@@ -237,7 +237,7 @@ uvicorn main:app --host 127.0.0.1 --port 8001 --reload
 
 ## 11. ESP32 setup
 
-Open `firmware/esp32_rfid_client/esp32_rfid_client.ino` in Arduino IDE, install the ESP32 board package and a compatible MFRC522 library, then check wiring in [docs/HARDWARE.md](docs/HARDWARE.md). Configure Wi-Fi, API URL, device ID and token for your test environment. The sample uses plain HTTP for isolated lab testing only; use HTTPS with certificate validation in any deployed network. Do not add relay/servo actuation until its command protocol, timeout, watchdog, door sensor and emergency egress behaviour have been separately implemented and tested.
+Open `firmware/esp32_rfid_client/esp32_rfid_client.ino` in Arduino IDE, install the ESP32 board package and a compatible MFRC522 library. Configure Wi-Fi, API URL, device ID and token for your test environment. The sample uses plain HTTP for isolated lab testing only; use HTTPS with certificate validation in any deployed network. Do not add relay/servo actuation until its command protocol, timeout, watchdog, door sensor and emergency egress behaviour have been separately implemented and tested.
 
 ## 12. Camera and AI implementation
 
