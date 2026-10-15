@@ -8,27 +8,27 @@ A modular IoT starter project combining RFID identification, an optional camera/
 - [AI-Powered Smart Access Control and Attendance System](#ai-powered-smart-access-control-and-attendance-system)
   - [Contents](#contents)
   - [1. Objectives](#1-objectives)
-  - [2. Features and status](#2-features-and-status)
-  - [3. Architecture](#3-architecture)
+  - [2. Architecture](#2-architecture)
     - [Service boundaries](#service-boundaries)
-  - [4. Technology stack](#4-technology-stack)
-  - [5. Repository structure](#5-repository-structure)
-  - [6. Access workflow](#6-access-workflow)
-  - [7. Data model](#7-data-model)
-  - [8. REST API](#8-rest-api)
+  - [3. Technology stack](#3-technology-stack)
+  - [4. Repository structure](#4-repository-structure)
+  - [5. Access workflow](#5-access-workflow)
+  - [6. Data model](#6-data-model)
+  - [7. REST API](#7-rest-api)
     - [`GET /health/`](#get-health)
     - [`POST /access/scan/`](#post-accessscan)
-  - [9. Quick start with Docker](#9-quick-start-with-docker)
-  - [10. Run locally](#10-run-locally)
-  - [11. ESP32 setup](#11-esp32-setup)
-  - [12. Camera and AI implementation](#12-camera-and-ai-implementation)
+  - [8. Quick start with Docker](#8-quick-start-with-docker)
+  - [9. Run locally](#9-run-locally)
+  - [10. ESP32 setup](#10-esp32-setup)
+- [Hardware Integration Notes](#hardware-integration-notes)
+  - [Reference components](#reference-components)
+  - [Example ESP32–MFRC522 wiring](#example-esp32mfrc522-wiring)
+  - [11. Camera and AI implementation](#11-camera-and-ai-implementation)
   - [13. Testing](#13-testing)
   - [14. Security, privacy and safety](#14-security-privacy-and-safety)
   - [15. Hardware bill of materials](#15-hardware-bill-of-materials)
   - [16. Roadmap](#16-roadmap)
-  - [17. Troubleshooting](#17-troubleshooting)
-  - [18. Contributing and license](#18-contributing-and-license)
-    - [Project status](#project-status)
+  
   
 ## 1. Objectives
 
@@ -39,22 +39,8 @@ A modular IoT starter project combining RFID identification, an optional camera/
 - Integrate an ESP32 RFID reader over a REST API.
 - Provide repeatable local deployment, automated tests and implementation documentation.
 
-## 2. Features and status
 
-| Feature | Status in this starter |
-|---|---|
-| Django REST API and relational models | Included |
-| Device ID + hashed device-token check | Included |
-| RFID scan decision and event log | Included |
-| Entry/exit attendance event record | Basic implementation included |
-| Django admin management interface | Included |
-| FastAPI health and face-verification interface | Placeholder interface only |
-| ESP32 + RC522 scan client | Reference sketch included |
-| Real face recognition/liveness | Not implemented |
-| Physical lock/relay actuation | Intentionally disabled |
-| Production TLS, replay defence, device provisioning UI | Must be completed before deployment |
-
-## 3. Architecture
+## 2. Architecture
 
 ```mermaid
 flowchart TD
@@ -80,7 +66,7 @@ flowchart TD
 - **PostgreSQL:** persistent relational store in Docker Compose. SQLite is used for simple local runs without PostgreSQL settings.
 - **Docker Compose:** repeatable development environment.
 
-## 4. Technology stack
+## 3. Technology stack
 
 - Python 3.12; Django 5.1; Django REST Framework
 - FastAPI and Uvicorn
@@ -90,7 +76,7 @@ flowchart TD
 - Potential AI extensions: OpenCV, scikit-learn or PyTorch
 - Django test framework; pytest can be added for AI-service tests
 
-## 5. Repository structure
+## 4. Repository structure
 
 ```text
 ai-powered-smart-access-control/
@@ -106,15 +92,10 @@ ai-powered-smart-access-control/
 ├── ai_service/             # FastAPI inference-service boundary
 ├── firmware/esp32_rfid_client/
 │   └── esp32_rfid_client.ino
-└── docs/
-    ├── ARCHITECTURE.md
-    ├── API.md
-    ├── HARDWARE.md
-    ├── SECURITY.md
-    └── IMPLEMENTATION_ROADMAP.md
+
 ```
 
-## 6. Access workflow
+## 5. Access workflow
 
 1. A person presents an RFID card.
 2. ESP32 sends the normalized card UID, device ID and event type to Django.
@@ -124,9 +105,8 @@ ai-powered-smart-access-control/
 6. If the scan is an allowed ENTRY/EXIT event, a basic attendance record is written.
 7. The device receives a JSON response. The starter never operates a physical relay.
 
-**Important:** RFID UIDs can be cloned on some card technologies. A UID is an identifier, not a cryptographic authentication factor. Production systems should consider secure cards, challenge-response where supported, a second factor, device request signing, and a threat model.
 
-## 7. Data model
+## 6. Data model
 
 | Model | Purpose |
 |---|---|
@@ -136,9 +116,8 @@ ai-powered-smart-access-control/
 | `AccessEvent` | Timestamped granted/denied scan with reason and metadata |
 | `AttendanceRecord` | Entry/exit attendance record linked to an access event |
 
-The basic attendance rule is deliberately simple. Define duplicate-tap windows, shift schedules, overnight shifts, time zones, entry/exit semantics and correction workflows before real use.
 
-## 8. REST API
+## 7. REST API
 
 Base path: `/api/v1/`
 
@@ -178,21 +157,14 @@ Example response:
 }
 ```
 
-- `200`: scan evaluated; inspect `decision` for grant/denial.
-- `400`: invalid payload.
-- `401`: missing or invalid device credentials.
-- `429`: throttled request where throttling is configured.
-
-See [docs/API.md](docs/API.md) for details and hardening backlog.
-
-## 9. Quick start with Docker
+## 8. Quick start with Docker
 
 Prerequisites: Git, Docker Engine and Docker Compose.
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ai-powered-smart-access-control.git
+git clone https://github.com/yuramsoft/ai-powered-smart-access-control.git
 cd ai-powered-smart-access-control
-cp .env.example .env
+cp .venv
 # Edit .env and replace all development secrets.
 docker compose up --build -d
 docker compose exec web python manage.py makemigrations access_control
@@ -213,14 +185,14 @@ python -c "import secrets,hashlib; t=secrets.token_urlsafe(32); print('TOKEN=',t
 
 Put the raw token only in the device's protected configuration and put the SHA-256 digest in `AccessDevice.token_hash`. Do not commit either value. This repository's default Compose settings are for local development, not production.
 
-## 10. Run locally
+## 9. Run locally
 
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\activate
 # Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
+cp .venv .venv
 python manage.py makemigrations access_control
 python manage.py migrate
 python manage.py createsuperuser
@@ -235,11 +207,30 @@ pip install -r requirements.txt
 uvicorn main:app --host 127.0.0.1 --port 8001 --reload
 ```
 
-## 11. ESP32 setup
+## 10. ESP32 setup
 
-Open `firmware/esp32_rfid_client/esp32_rfid_client.ino` in Arduino IDE, install the ESP32 board package and a compatible MFRC522 library, then check wiring in [docs/HARDWARE.md](docs/HARDWARE.md). Configure Wi-Fi, API URL, device ID and token for your test environment. The sample uses plain HTTP for isolated lab testing only; use HTTPS with certificate validation in any deployed network. Do not add relay/servo actuation until its command protocol, timeout, watchdog, door sensor and emergency egress behaviour have been separately implemented and tested.
+Open `firmware/esp32_rfid_client/esp32_rfid_client.ino` in Arduino IDE, install the ESP32 board package and a compatible MFRC522 library, then check wiring. Configure Wi-Fi, API URL, device ID and token for your test environment. The sample uses plain HTTP for isolated lab testing only; use HTTPS with certificate validation in any deployed network. 
 
-## 12. Camera and AI implementation
+# Hardware Integration Notes
+
+## Reference components
+ESP32 board, MFRC522/RC522 reader and test cards, optional camera/IP camera, low-voltage relay/servo demonstrator, door/reed switch, buzzer/LEDs, regulated power supply, enclosure.
+
+## Example ESP32–MFRC522 wiring
+| MFRC522 signal | Example ESP32 pin |
+|---|---:|
+| SDA / SS | GPIO 5 |
+| SCK | GPIO 18 |
+| MOSI | GPIO 23 |
+| MISO | GPIO 19 |
+| RST | GPIO 22 |
+| VCC | 3.3 V; verify module specification |
+| GND | GND |
+
+Pins vary by board and can conflict with onboard peripherals; check the board schematic. Never drive a lock or motor directly from an ESP32 GPIO. Use a suitably rated driver, supply and isolation. Prototype with low voltage, add a door sensor and independent emergency egress, and obtain an appropriate safety review before real installation. Physical actuation is intentionally disabled in this starter.
+
+
+## 11. Camera and AI implementation
 
 The FastAPI endpoint is a **non-working placeholder** and always returns `verified: false`. To implement face verification:
 
